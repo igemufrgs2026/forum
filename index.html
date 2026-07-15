@@ -63,7 +63,7 @@
                     <option value="todos">Todos os períodos</option>
                 </select>
             </div>
-            <button class="btn-secundario" onclick="baixarDadosPublicos()">Baixar Dados</button>
+            <button class="btn-secundario" onclick="baixarDadosPublicos()">📥 Baixar Dados</button>
         </div>
         <div id="map"></div>
     </div>
@@ -78,6 +78,10 @@
                 <div class="form-group">
                     <label>Serial do Aparelho</label>
                     <input type="text" id="serial" value="1111-1111" required>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Cultura Afetada</label>
+                    <input type="text" id="cultura" placeholder="Ex: Soja, Milho, Trigo..." required>
                 </div>
                 <div class="form-group"><label>Data</label><input type="date" id="data" required></div>
                 <div class="form-group"><label>Endereço</label><input type="text" id="endereco" required></div>
@@ -109,7 +113,7 @@
                     <div class="admin-header">
                         <h3 style="font-size: 16px;">Gerenciar Registros</h3>
                         <div class="admin-actions">
-                            <button class="btn-logout" style="color: var(--accent); border-color: var(--accent);" onclick="baixarDadosAdmin()">Baixar Planilha Completa</button>
+                            <button class="btn-logout" style="color: var(--accent); border-color: var(--accent);" onclick="baixarDadosAdmin()">📥 Baixar Planilha</button>
                             <button class="btn-logout" onclick="fazerLogout()">Sair</button>
                         </div>
                     </div>
@@ -127,9 +131,9 @@
         // URL
         // ==========================================
         const linkEmbaralhado = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J6OWJXQllmVlZJZkQyVmxNNElpNjl4czIxczlKZmVYUjJJaGk4dzNiUUZzV01mbTZveTZOemJLUlJFdnNTRnltby9leGVj";
-        const URL_PLANILHA = atob(linkEmbaralhado); // O navegador desembaralha isso em milissegundos
+        const URL_PLANILHA = atob(linkEmbaralhado); 
 
-        const map = L.map('map').setView([-30.0346, -53.0], 7); // Focado no RS
+        const map = L.map('map').setView([-30.0346, -53.0], 7); 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
         const marcadoresLayer = L.layerGroup().addTo(map);
         let todasOcorrencias = [];
@@ -178,7 +182,8 @@
                     const marker = L.circleMarker([ponto.lat, ponto.lng], {
                         radius: 10, fillColor: getCorGravidade(ponto.gravidade), color: "#000", weight: 2, fillOpacity: 1
                     });
-                    marker.bindPopup(`<b>Data:</b> ${formatarDataTratada(ponto.data)}<br><b>Gravidade:</b> ${ponto.gravidade}`);
+                    
+                    marker.bindPopup(`<b>Data:</b> ${formatarDataTratada(ponto.data)}<br><b>Cultura:</b> ${ponto.cultura || 'N/A'}<br><b>Gravidade:</b> ${ponto.gravidade}`);
                     marcadoresLayer.addLayer(marker);
                 }
             });
@@ -198,7 +203,7 @@
         document.getElementById('filtroSemestre').addEventListener('change', renderizarMapa);
 
         // ==========================================
-        // ENVIO DO FORMULÁRIO
+        // ENVIO DO FORMULÁRIO 
         // ==========================================
         document.getElementById('registroForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -216,7 +221,6 @@
                     const lat = parseFloat(resGeo[0].lat); 
                     const lng = parseFloat(resGeo[0].lon);
                     
-                    // Verifica se já existe um ponto no MESMO DIA e MESMA COORDENADA
                     const pontoExistente = todasOcorrencias.find(p => 
                         String(p.data).substring(0,10) === dataInput && 
                         Math.abs(parseFloat(p.lat) - lat) < 0.0001 && 
@@ -241,6 +245,7 @@
                         nome: document.getElementById('nome').value,
                         contato: document.getElementById('contato').value,
                         serial: document.getElementById('serial').value,
+                        cultura: document.getElementById('cultura').value,
                         data: dataInput,
                         endereco: endereco,
                         gravidade: document.getElementById('gravidade').value,
@@ -249,6 +254,7 @@
 
                     await fetch(URL_PLANILHA, {
                         method: 'POST',
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
                         body: JSON.stringify({ action: acaoServidor, dados: novoPonto })
                     });
                     
@@ -284,15 +290,15 @@
         window.baixarDadosPublicos = function() {
             if (!todasOcorrencias.length) return alert("Nenhum dado disponível.");
             const d = [...todasOcorrencias].sort((a, b) => new Date(String(a.data).substring(0,10)) - new Date(String(b.data).substring(0,10)))
-                .map(p => ({ Data: formatarDataTratada(p.data), Latitude: p.lat, Longitude: p.lng, Gravidade: p.gravidade }));
-            gerarCSV(d, ["Data", "Latitude", "Longitude", "Gravidade"], "banco_publico_mapa.csv");
+                .map(p => ({ Data: formatarDataTratada(p.data), Cultura: p.cultura, Latitude: p.lat, Longitude: p.lng, Gravidade: p.gravidade }));
+            gerarCSV(d, ["Data", "Cultura", "Latitude", "Longitude", "Gravidade"], "banco_publico_mapa.csv");
         };
 
         window.baixarDadosAdmin = function() {
             if (!todasOcorrencias.length) return alert("Nenhum dado disponível.");
             const d = [...todasOcorrencias].sort((a, b) => new Date(String(a.data).substring(0,10)) - new Date(String(b.data).substring(0,10)))
-                .map(p => ({ Data: formatarDataTratada(p.data), Gravidade: p.gravidade, Latitude: p.lat, Longitude: p.lng, Endereco: p.endereco, Nome: p.nome, Contato: p.contato, Serial: p.serial }));
-            gerarCSV(d, ["Data", "Gravidade", "Latitude", "Longitude", "Endereco", "Nome", "Contato", "Serial"], "planilha_admin.csv");
+                .map(p => ({ Data: formatarDataTratada(p.data), Gravidade: p.gravidade, Cultura: p.cultura, Latitude: p.lat, Longitude: p.lng, Endereco: p.endereco, Nome: p.nome, Contato: p.contato, Serial: p.serial }));
+            gerarCSV(d, ["Data", "Gravidade", "Cultura", "Latitude", "Longitude", "Endereco", "Nome", "Contato", "Serial"], "planilha_admin.csv");
         };
 
         // ==========================================
@@ -333,7 +339,7 @@
             
             itens.forEach(ponto => {
                 const li = document.createElement('li');
-                li.innerHTML = `<div><strong>${formatarDataTratada(ponto.data)}</strong> - ${ponto.gravidade}<br>
+                li.innerHTML = `<div><strong>${formatarDataTratada(ponto.data)}</strong> - ${ponto.gravidade} (${ponto.cultura || 'N/A'})<br>
                 <span style="font-size:11px; color:#aaa;">${ponto.nome} | SN: ${ponto.serial || 'N/A'}</span></div>
                 <button class="btn-delete" onclick="deletarPonto('${ponto.id}')">Excluir</button>`;
                 lista.appendChild(li);
@@ -345,6 +351,7 @@
             try {
                 await fetch(URL_PLANILHA, { 
                     method: 'POST', 
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: 'delete', dados: { id: id } }) 
                 });
                 carregarDadosDaPlanilha();
