@@ -124,7 +124,7 @@
 
     <script>
         // ==========================================
-        // URL OFUSCADA (Proteção contra bots do GitHub)
+        // URL
         // ==========================================
         const linkEmbaralhado = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J6OWJXQllmVlZJZkQyVmxNNElpNjl4czIxczlKZmVYUjJJaGk4dzNiUUZzV01mbTZveTZOemJLUlJFdnNTRnltby9leGVj";
         const URL_PLANILHA = atob(linkEmbaralhado); // O navegador desembaralha isso em milissegundos
@@ -198,7 +198,7 @@
         document.getElementById('filtroSemestre').addEventListener('change', renderizarMapa);
 
         // ==========================================
-        // ENVIO DO FORMULÁRIO COM VERIFICAÇÃO DE DUPLICATAS
+        // ENVIO DO FORMULÁRIO
         // ==========================================
         document.getElementById('registroForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -253,7 +253,6 @@
                     });
                     
                     this.reset();
-                    // Garante que o serial volta ao padrão de teste após o reset do formulário
                     document.getElementById('serial').value = "1111-1111"; 
                     
                     switchTab('mapaTab', document.querySelector('.tabs button:first-child'));
@@ -271,7 +270,7 @@
         });
 
         // ==========================================
-        // EXPORTAÇÕES (Público e Admin)
+        // EXPORTAÇÕES
         // ==========================================
         function gerarCSV(dadosMapeados, colunas, nomeArquivo) {
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + colunas.join(";") + "\r\n"; 
@@ -297,7 +296,7 @@
         };
 
         // ==========================================
-        // LÓGICA DAS ABAS E ADMIN
+        // ABAS E ADMIN
         // ==========================================
         window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
