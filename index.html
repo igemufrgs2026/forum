@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Ocorrências (iGEM 2026)</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        :root { --bg-color: #121212; --panel-bg: #1e1e1e; --text-color: #e0e0e0; --accent: #3b82f6; --danger: #ef4444; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; height: 100vh; }
+
+        .tabs { display: flex; background-color: var(--panel-bg); border-bottom: 1px solid #333; }
+        .tab-btn { flex: 1; padding: 15px; background: none; border: none; color: var(--text-color); font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .tab-btn.active { border-bottom: 3px solid var(--accent); font-weight: bold; }
+        .tab-content { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+        .tab-content.active { display: flex; }
+        
+        .filter-container { padding: 12px; background-color: var(--panel-bg); border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .filter-group { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 250px; }
+        .filter-container select { width: auto; flex: 1; max-width: 250px; margin: 0; }
+        #map { width: 100%; flex: 1; z-index: 1; }
+
+        .form-container { padding: 20px; max-width: 500px; margin: 20px auto; background-color: var(--panel-bg); border-radius: 8px; width: 90%; overflow-y: auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #444; border-radius: 4px; background-color: #2a2a2a; color: white; }
+        button.btn-padrao { width: 100%; padding: 12px; background-color: var(--accent); color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        button.btn-padrao:hover { background-color: #2563eb; }
+        button.btn-secundario { background-color: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; transition: 0.2s; white-space: nowrap; }
+        button.btn-secundario:hover { background-color: var(--accent); color: white; }
+        .loading { display: none; text-align: center; margin-top: 10px; font-size: 14px; color: #aaa; }
+
+        .admin-link { display: block; text-align: center; margin-top: 40px; color: #555; font-size: 12px; text-decoration: none; cursor: pointer; }
+        #adminSection { display: none; margin-top: 30px; padding-top: 20px; border-top: 1px solid #333; }
+        #adminLogin, #adminPanel { display: none; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;}
+        .admin-actions { display: flex; gap: 8px; }
+        .btn-logout { background: none; border: 1px solid #555; color: #ccc; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;}
+        .btn-logout:hover { background: #333; }
+        .admin-list { list-style: none; max-height: 250px; overflow-y: auto; }
+        .admin-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; font-size: 14px; }
+        .btn-delete { background-color: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: 0.2s;}
+        .error-msg { color: var(--danger); font-size: 12px; margin-top: 5px; display: none; }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip { background-color: var(--panel-bg); color: var(--text-color); }
+    </style>
+</head>
+<body>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('mapaTab', this)">Visualizar Mapa</button>
+        <button class="tab-btn" onclick="switchTab('registroTab', this)">Registrar Ponto</button>
+    </div>
+
+    <!-- Aba do Mapa -->
+    <div id="mapaTab" class="tab-content active">
+        <div class="filter-container">
+            <div class="filter-group">
+                <label for="filtroSemestre">Filtrar:</label>
+                <select id="filtroSemestre">
+                    <option value="todos">Todos os períodos</option>
+                </select>
+            </div>
+            <button class="btn-secundario" onclick="baixarDadosPublicos()">📥 Baixar Dados</button>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <!-- Aba de Registro -->
+    <div id="registroTab" class="tab-content">
+        <div class="form-container">
+            <h2>Novo Registro</h2><br>
+            <form id="registroForm">
+                <div class="form-group"><label>Nome Completo</label><input type="text" id="nome" required></div>
+                <div class="form-group"><label>Contato</label><input type="text" id="contato" required></div>
+                <div class="form-group">
+                    <label>Serial do Aparelho</label>
+                    <input type="text" id="serial" value="1111-1111" required>
+                </div>
+                <div class="form-group"><label>Data</label><input type="date" id="data" required></div>
+                <div class="form-group"><label>Endereço</label><input type="text" id="endereco" required></div>
+                <div class="form-group">
+                    <label>Nível de Gravidade</label>
+                    <select id="gravidade" required>
+                        <option value="Baixa">Baixa</option><option value="Média">Média</option>
+                        <option value="Alta">Alta</option><option value="Extrema">Extrema</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-padrao" style="margin-top: 10px;">Adicionar ao Mapa</button>
+                <div id="loadingMsg" class="loading">Processando informações...</div>
+            </form>
+
+            <a class="admin-link" onclick="toggleAdminSection()">Administrador</a>
+
+            <div id="adminSection">
+                <div id="adminLogin">
+                    <h3 style="margin-bottom: 15px; font-size: 16px;">Login Administrativo</h3>
+                    <form id="loginForm">
+                        <div class="form-group"><input type="text" id="adminUsuario" placeholder="Usuário" required></div>
+                        <div class="form-group"><input type="password" id="adminSenha" placeholder="Senha" required></div>
+                        <button type="submit" class="btn-padrao" style="padding: 8px;">Entrar</button>
+                        <div id="loginError" class="error-msg">Usuário ou senha incorretos.</div>
+                    </form>
+                </div>
+
+                <div id="adminPanel">
+                    <div class="admin-header">
+                        <h3 style="font-size: 16px;">Gerenciar Registros</h3>
+                        <div class="admin-actions">
+                            <button class="btn-logout" style="color: var(--accent); border-color: var(--accent);" onclick="baixarDadosAdmin()">📥 Baixar Planilha</button>
+                            <button class="btn-logout" onclick="fazerLogout()">Sair</button>
+                        </div>
+                    </div>
+                    <ul class="admin-list" id="listaOcorrenciasAdmin"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // ==========================================
+        // URL OFUSCADA (Proteção contra bots do GitHub)
+        // ==========================================
+        const linkEmbaralhado = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J6OWJXQllmVlZJZkQyVmxNNElpNjl4czIxczlKZmVYUjJJaGk4dzNiUUZzV01mbTZveTZOemJLUlJFdnNTRnltby9leGVj";
+        const URL_PLANILHA = atob(linkEmbaralhado); // O navegador desembaralha isso em milissegundos
+
+        const map = L.map('map').setView([-30.0346, -53.0], 7); // Focado no RS
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+        const marcadoresLayer = L.layerGroup().addTo(map);
+        let todasOcorrencias = [];
+
+        function formatarDataTratada(dataRaw) {
+            if (!dataRaw) return "Sem data";
+            const dataLimpa = String(dataRaw).substring(0, 10);
+            const partes = dataLimpa.split('-');
+            if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+            return dataRaw;
+        }
+
+        function classificarSemestre(dataRaw) {
+            if (!dataRaw) return "Desconhecido";
+            const dataLimpa = String(dataRaw).substring(0, 10);
+            const p = dataLimpa.split('-');
+            if(p.length !== 3) return "Desconhecido";
+            return `${parseInt(p[1]) <= 6 ? '1º Sem' : '2º Sem'} ${p[0]}`;
+        }
+
+        function getCorGravidade(nivel) {
+            const cores = { 'Baixa': '#22c55e', 'Média': '#eab308', 'Alta': '#f97316', 'Extrema': '#ef4444' };
+            return cores[nivel] || '#3b82f6';
+        }
+
+        async function carregarDadosDaPlanilha() {
+            try {
+                const resposta = await fetch(URL_PLANILHA);
+                todasOcorrencias = await resposta.json();
+                renderizarMapa();
+            } catch (erro) {
+                console.error("Erro ao carregar dados:", erro);
+            }
+        }
+
+        function renderizarMapa() {
+            marcadoresLayer.clearLayers();
+            const filtroAtual = document.getElementById('filtroSemestre').value;
+            const semestresUnicos = new Set();
+
+            todasOcorrencias.forEach(ponto => {
+                const sem = classificarSemestre(ponto.data);
+                semestresUnicos.add(sem);
+                
+                if (filtroAtual === 'todos' || filtroAtual === sem) {
+                    const marker = L.circleMarker([ponto.lat, ponto.lng], {
+                        radius: 10, fillColor: getCorGravidade(ponto.gravidade), color: "#000", weight: 2, fillOpacity: 1
+                    });
+                    marker.bindPopup(`<b>Data:</b> ${formatarDataTratada(ponto.data)}<br><b>Gravidade:</b> ${ponto.gravidade}`);
+                    marcadoresLayer.addLayer(marker);
+                }
+            });
+            atualizarOpcoesDoFiltro(semestresUnicos, filtroAtual);
+            if(sessionStorage.getItem('isLogadoComoAdmin') === 'true') renderizarListaAdmin(); 
+        }
+
+        function atualizarOpcoesDoFiltro(semestres, valorAtual) {
+            const select = document.getElementById('filtroSemestre');
+            select.innerHTML = '<option value="todos">Todos os períodos</option>';
+            Array.from(semestres).sort().reverse().forEach(sem => {
+                const op = document.createElement('option'); op.value = sem; op.textContent = sem;
+                if (sem === valorAtual) op.selected = true;
+                select.appendChild(op);
+            });
+        }
+        document.getElementById('filtroSemestre').addEventListener('change', renderizarMapa);
+
+        // ==========================================
+        // ENVIO DO FORMULÁRIO COM VERIFICAÇÃO DE DUPLICATAS
+        // ==========================================
+        document.getElementById('registroForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const loadingMsg = document.getElementById('loadingMsg');
+            loadingMsg.style.display = 'block';
+
+            try {
+                const endereco = document.getElementById('endereco').value;
+                const dataInput = document.getElementById('data').value;
+                
+                const reqGeo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`);
+                const resGeo = await reqGeo.json();
+                
+                if (resGeo && resGeo.length > 0) {
+                    const lat = parseFloat(resGeo[0].lat); 
+                    const lng = parseFloat(resGeo[0].lon);
+                    
+                    // Verifica se já existe um ponto no MESMO DIA e MESMA COORDENADA
+                    const pontoExistente = todasOcorrencias.find(p => 
+                        String(p.data).substring(0,10) === dataInput && 
+                        Math.abs(parseFloat(p.lat) - lat) < 0.0001 && 
+                        Math.abs(parseFloat(p.lng) - lng) < 0.0001
+                    );
+
+                    let acaoServidor = 'add';
+                    let idPonto = "ID-" + Date.now();
+
+                    if (pontoExistente) {
+                        const confirmacao = confirm("Já existe um registro nesta coordenada para a data informada.\n\nTem certeza que deseja ATUALIZAR a informação existente?");
+                        if (!confirmacao) {
+                            loadingMsg.style.display = 'none';
+                            return; 
+                        }
+                        acaoServidor = 'update';
+                        idPonto = pontoExistente.id;
+                    }
+                    
+                    const novoPonto = {
+                        id: idPonto,
+                        nome: document.getElementById('nome').value,
+                        contato: document.getElementById('contato').value,
+                        serial: document.getElementById('serial').value,
+                        data: dataInput,
+                        endereco: endereco,
+                        gravidade: document.getElementById('gravidade').value,
+                        lat: lat, lng: lng
+                    };
+
+                    await fetch(URL_PLANILHA, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: acaoServidor, dados: novoPonto })
+                    });
+                    
+                    this.reset();
+                    // Garante que o serial volta ao padrão de teste após o reset do formulário
+                    document.getElementById('serial').value = "1111-1111"; 
+                    
+                    switchTab('mapaTab', document.querySelector('.tabs button:first-child'));
+                    map.flyTo([lat, lng], 12);
+                    carregarDadosDaPlanilha(); 
+                } else { 
+                    alert('Endereço não encontrado.'); 
+                }
+            } catch (error) { 
+                alert('Erro ao processar dados.'); 
+                console.error(error);
+            } finally { 
+                loadingMsg.style.display = 'none'; 
+            }
+        });
+
+        // ==========================================
+        // EXPORTAÇÕES (Público e Admin)
+        // ==========================================
+        function gerarCSV(dadosMapeados, colunas, nomeArquivo) {
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + colunas.join(";") + "\r\n"; 
+            dadosMapeados.forEach(row => {
+                csvContent += colunas.map(col => `"${String(row[col] || "").replace(/"/g, '""')}"`).join(";") + "\r\n";
+            });
+            const link = document.createElement("a"); link.href = encodeURI(csvContent); link.download = nomeArquivo;
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        window.baixarDadosPublicos = function() {
+            if (!todasOcorrencias.length) return alert("Nenhum dado disponível.");
+            const d = [...todasOcorrencias].sort((a, b) => new Date(String(a.data).substring(0,10)) - new Date(String(b.data).substring(0,10)))
+                .map(p => ({ Data: formatarDataTratada(p.data), Latitude: p.lat, Longitude: p.lng, Gravidade: p.gravidade }));
+            gerarCSV(d, ["Data", "Latitude", "Longitude", "Gravidade"], "banco_publico_mapa.csv");
+        };
+
+        window.baixarDadosAdmin = function() {
+            if (!todasOcorrencias.length) return alert("Nenhum dado disponível.");
+            const d = [...todasOcorrencias].sort((a, b) => new Date(String(a.data).substring(0,10)) - new Date(String(b.data).substring(0,10)))
+                .map(p => ({ Data: formatarDataTratada(p.data), Gravidade: p.gravidade, Latitude: p.lat, Longitude: p.lng, Endereco: p.endereco, Nome: p.nome, Contato: p.contato, Serial: p.serial }));
+            gerarCSV(d, ["Data", "Gravidade", "Latitude", "Longitude", "Endereco", "Nome", "Contato", "Serial"], "planilha_admin.csv");
+        };
+
+        // ==========================================
+        // LÓGICA DAS ABAS E ADMIN
+        // ==========================================
+        window.switchTab = function(tabId, btn) {
+            document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active'); btn.classList.add('active');
+            if(tabId === 'mapaTab') setTimeout(() => map.invalidateSize(), 100);
+        };
+
+        window.toggleAdminSection = function() {
+            const sec = document.getElementById('adminSection');
+            sec.style.display = sec.style.display === 'block' ? 'none' : 'block';
+            if (sec.style.display === 'block') window.verificarEstadoLogin();
+        };
+
+        window.verificarEstadoLogin = function() {
+            const isLogado = sessionStorage.getItem('isLogadoComoAdmin') === 'true';
+            document.getElementById('adminLogin').style.display = isLogado ? 'none' : 'block';
+            document.getElementById('adminPanel').style.display = isLogado ? 'block' : 'none';
+            if(isLogado) renderizarListaAdmin();
+        };
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (document.getElementById('adminUsuario').value === 'admin' && document.getElementById('adminSenha').value === 'igem2026') {
+                sessionStorage.setItem('isLogadoComoAdmin', 'true'); this.reset(); window.verificarEstadoLogin();
+            } else { document.getElementById('loginError').style.display = 'block'; }
+        });
+
+        window.fazerLogout = function() { sessionStorage.removeItem('isLogadoComoAdmin'); window.verificarEstadoLogin(); };
+
+        window.renderizarListaAdmin = function() {
+            const lista = document.getElementById('listaOcorrenciasAdmin'); lista.innerHTML = '';
+            const itens = [...todasOcorrencias].sort((a, b) => new Date(String(b.data).substring(0,10)) - new Date(String(a.data).substring(0,10)));
+            if (!itens.length) { lista.innerHTML = '<li style="color:#888; justify-content:center;">Sem pontos.</li>'; return; }
+            
+            itens.forEach(ponto => {
+                const li = document.createElement('li');
+                li.innerHTML = `<div><strong>${formatarDataTratada(ponto.data)}</strong> - ${ponto.gravidade}<br>
+                <span style="font-size:11px; color:#aaa;">${ponto.nome} | SN: ${ponto.serial || 'N/A'}</span></div>
+                <button class="btn-delete" onclick="deletarPonto('${ponto.id}')">Excluir</button>`;
+                lista.appendChild(li);
+            });
+        };
+
+        window.deletarPonto = async function(id) {
+            if(!confirm("Deseja excluir este ponto?")) return;
+            try {
+                await fetch(URL_PLANILHA, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'delete', dados: { id: id } }) 
+                });
+                carregarDadosDaPlanilha();
+            } catch (error) { alert("Erro ao excluir."); }
+        };
+
+        // Inicia o mapa lendo a planilha
+        carregarDadosDaPlanilha();
+    </script>
+</body>
+</html>
