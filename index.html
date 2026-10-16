@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Ocorrências (iGEM 2026)</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <header class="site-header"><div><p class="eyebrow">iGEM UFRGS · 2026</p><h1>Mapa de relatos</h1><p>Local e data para contextualizar os registros do biossensor de 2,4-D.</p></div><a href="?demo=1">Explorar demonstração</a></header>
+    <aside class="notice">Dados de demonstração: os registros atuais são fictícios e não representam eventos reais de contaminação. <a href="?">Abrir integração com a planilha</a></aside>
+    <noscript>Ative o JavaScript para visualizar o mapa e registrar pontos.</noscript>
+
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="mapaTab">Visualizar Mapa</button>
+        <button class="tab-btn" data-tab="registroTab">Registrar Ponto</button>
+    </div>
+
+    <!-- Aba do Mapa -->
+    <div id="mapaTab" class="tab-content active">
+        <div class="filter-container">
+            <div class="filter-group">
+                <label for="filtroSemestre">Filtrar:</label>
+                <select id="filtroSemestre">
+                    <option value="todos">Todos os períodos</option>
+                </select>
+            </div>
+            <button class="btn-secundario" id="downloadData">Baixar Dados</button>
+        </div>
+        <div class="status-bar"><p id="dataStatus" role="status" aria-live="polite"></p><button id="retryData" class="btn-secundario">Recarregar registros</button></div>
+        <p id="recordCount" class="hint" aria-live="polite"></p>
+        <p id="mapStatus" role="status"></p>
+        <div id="map" aria-label="Mapa dos registros"></div>
+        <p class="legend">Gravidade informada: <span>🟢 Baixa</span> <span>🟡 Média</span> <span>🟠 Alta</span> <span>🔴 Extrema</span></p>
+    </div>
+
+    <!-- Aba de Registro -->
+    <div id="registroTab" class="tab-content">
+        <div class="form-container">
+            <h2>Novo Registro</h2><br>
+            <form id="registroForm">
+                <div class="form-group"><label for="nome">Nome Completo</label><input type="text" id="nome" maxlength="120" required></div>
+                <div class="form-group"><label for="contato">Contato</label><input type="text" id="contato" maxlength="160" required></div>
+                <div class="form-group">
+                    <label for="serial">Serial do Aparelho</label>
+                    <input type="text" id="serial" placeholder="Ex.: DEMO-001" maxlength="60" required>
+                </div>
+                <div class="form-group">
+                    <label for="cultura">Tipo de Cultura Afetada</label>
+                    <input type="text" id="cultura" maxlength="80" placeholder="Ex: Uva, Maçã, Milho..." required>
+                </div>
+                <div class="form-group"><label for="data">Data</label><input type="date" id="data" required></div>
+                <div class="form-group"><label for="endereco">Endereço</label><input type="text" id="endereco" maxlength="240" required></div>
+                <details class="form-group"><summary>Usar coordenadas em vez da busca por endereço</summary><p class="hint">Preencha ambos os campos. Latitude e longitude usam graus decimais.</p>
+                <label for="latitude">Latitude</label><input id="latitude" type="number" step="any" min="-90" max="90" placeholder="-30.0346">
+                <label for="longitude">Longitude</label><input id="longitude" type="number" step="any" min="-180" max="180" placeholder="-51.2177"></details>
+                <div class="form-group">
+                    <label for="gravidade">Nível de Gravidade</label>
+                    <select id="gravidade" required>
+                        <option value="Baixa">Baixa</option><option value="Média">Média</option>
+                        <option value="Alta">Alta</option><option value="Extrema">Extrema</option>
+                    </select>
+                </div>
+                <fieldset class="measurement"><legend>Resultado do biossensor</legend>
+                    <label for="concentracao">Concentração medida</label><input id="concentracao" type="number" min="0" step="any" required placeholder="Copie o resultado do aparelho">
+                    <label for="unidade">Unidade</label><select id="unidade" required><option value="">Selecione a unidade do aparelho</option><option>mg/mL</option><option>µg/L</option><option>mg/L</option></select>
+                    <p class="hint">Não fazemos conversão automática. A gravidade é uma classificação separada.</p>
+                </fieldset>
+                <p class="hint">Data, cultura, coordenadas, gravidade e resultado serão públicos. Nome, contato, endereço e serial ficam restritos à planilha da equipe após a atualização do servidor.</p>
+                <button type="submit" class="btn-padrao" style="margin-top: 10px;">Adicionar ao Mapa</button>
+                <div id="loadingMsg" class="loading" role="status" aria-live="polite">Processando informações...</div>
+            </form>
+
+            <p class="hint">A gravidade é informada pelo usuário e não é calculada a partir de uma concentração.</p>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script defer src="assets/js/config.js"></script>
+    <script defer src="assets/js/utils.js"></script>
+    <script defer src="assets/js/api.js"></script>
+    <script defer src="assets/js/map.js"></script>
+    <script defer src="assets/js/export.js"></script>
+    <script defer src="assets/js/form.js"></script>
+    <script defer src="assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+{"name":"igem-ufrgs-forum","version":"0.1.0","private":true,"description":"Community reporting prototype for the iGEM UFRGS 2,4-D biosensor","scripts":{"test":"node --test tests/*.test.cjs","start":"python3 -m http.server 8000"},"engines":{"node":">=18"}}

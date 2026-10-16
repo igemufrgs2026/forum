@@ -1,0 +1,30 @@
+[
+  {
+    "id": "DEMO-001",
+    "data": "2026-03-10",
+    "cultura": "Uva",
+    "gravidade": "Baixa",
+    "lat": -29.17,
+    "lng": -51.52,
+    "concentracao": 0,
+    "unidade": "mg/mL"
+  },
+  {
+    "id": "DEMO-002",
+    "data": "2026-08-15",
+    "cultura": "Milho",
+    "gravidade": "Média",
+    "lat": -30.03,
+    "lng": -51.22,
+    "concentracao": 0.002,
+    "unidade": "mg/mL"
+  },
+  {
+    "id": "DEMO-003",
+    "data": "2026-09-20",
+    "cultura": "Maçã",
+    "gravidade": "Alta",
+    "lat": -28.5,
+    "lng": -50.93
+  }
+]

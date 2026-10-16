@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+<title id="title">iGEM UFRGS — Community reporting</title><desc id="desc">A map pin connects a biosensor observation to place and time.</desc>
+<rect width="1200" height="300" rx="24" fill="#17241f"/>
+<g fill="none" stroke="#365c49" stroke-width="2"><path d="M820 0v300M920 0v300M1020 0v300M1120 0v300M760 60h440M760 160h440M760 260h440"/></g>
+<circle cx="970" cy="150" r="85" fill="#213d2e"/><path d="M970 80c-35 0-55 24-55 53 0 40 55 89 55 89s55-49 55-89c0-29-20-53-55-53Z" fill="#91d6b1"/><circle cx="970" cy="133" r="20" fill="#17241f"/>
+<g font-family="Arial,sans-serif"><text x="58" y="70" fill="#91d6b1" font-size="20" letter-spacing="3">iGEM UFRGS · 2026</text><text x="58" y="142" fill="#f3f7f4" font-size="44" font-weight="bold">Community reporting</text><text x="58" y="190" fill="#c0c9c4" font-size="23">Connecting biosensor observations to place and time.</text><text x="58" y="252" fill="#91d6b1" font-size="17">2,4-D biosensor · Manual registration · Demonstration prototype</text></g></svg>
