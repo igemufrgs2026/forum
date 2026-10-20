@@ -66,8 +66,16 @@ Public update/delete operations are disabled. Administration is performed by aut
 
 ## Contributing and reuse
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and [security reporting](SECURITY.md). The team has not selected a software license; see [licensing status](docs/licensing.md). Open-source reuse permissions should not be inferred from repository visibility.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and [security reporting](SECURITY.md). The original project materials are licensed under CC BY 4.0; see [licensing details](docs/licensing.md).
 
 ## Credits
 
 Developed for iGEM UFRGS 2026. Mapping uses [Leaflet](https://leafletjs.com/), [OpenStreetMap](https://www.openstreetmap.org/copyright) and [Nominatim](https://nominatim.org/). These services have their own licenses and usage policies.
+
+## License
+
+Copyright (c) 2026 iGEM UFRGS Brazil contributors.
+
+Except where otherwise indicated, the original code, input files, documentation and other original materials in this repository are licensed under the [Creative Commons Attribution 4.0 International license (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). See [LICENSE](LICENSE) for the full text.
+
+When reusing these materials, credit iGEM UFRGS Brazil 2026, link to this repository and the license, and indicate any changes. Third-party software, libraries, force fields, data and services retain their own licenses and attribution requirements.

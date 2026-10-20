@@ -30,3 +30,11 @@ Não há envio automático pelo ESP32. Concentração e unidade foram implementa
 4. Evoluir lista sincronizada ao mapa e filtros.
 
 Veja a [arquitetura](docs/architecture.md), o [dicionário dos dados](docs/data-dictionary.md) e o [guia de contribuição](CONTRIBUTING.md).
+
+## Licença
+
+Copyright (c) 2026 colaboradores iGEM UFRGS Brazil.
+
+Salvo indicação em contrário, o código, a documentação e os demais materiais originais deste projeto estão sob a licença [Creative Commons Atribuição 4.0 Internacional (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). Consulte o texto completo em [LICENSE](LICENSE) e os [detalhes de licenciamento](docs/licensing.md).
+
+Ao reutilizar, atribua crédito a iGEM UFRGS Brazil 2026, inclua links para o repositório e a licença e indique as alterações realizadas. Componentes, dados e serviços de terceiros mantêm suas próprias licenças e exigências de atribuição.
